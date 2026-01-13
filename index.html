@@ -36,6 +36,7 @@
             margin: 0 auto;
         }
 
+        /* Glass effect - optimized */
         .glass {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
@@ -44,6 +45,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
+        /* Owner Name */
         .owner-name {
             background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.3));
             backdrop-filter: blur(10px);
@@ -64,6 +66,7 @@
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
+        /* Header */
         .header {
             padding: 20px;
             border-radius: 20px;
@@ -99,6 +102,7 @@
             color: #fbbf24;
         }
 
+        /* Submission Form */
         .submission-box {
             padding: 20px;
             border-radius: 20px;
@@ -155,6 +159,7 @@
             opacity: 0.6;
         }
 
+        /* Results */
         .results-box {
             padding: 20px;
             border-radius: 20px;
@@ -320,90 +325,17 @@
             text-align: center;
             font-weight: bold;
         }
-
-        .server-stopped-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(0, 0, 0, 0.98) !important;
-            backdrop-filter: blur(30px) !important;
-            -webkit-backdrop-filter: blur(30px) !important;
-            z-index: 999999 !important;
-            display: none !important;
-            justify-content: center !important;
-            align-items: center !important;
-            flex-direction: column !important;
-            pointer-events: all !important;
-        }
-
-        .server-stopped-overlay.active {
-            display: flex !important;
-        }
-
-        .stopped-content {
-            text-align: center;
-            padding: 40px;
-        }
-
-        .stopped-icon {
-            font-size: 100px;
-            margin-bottom: 30px;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .stopped-text {
-            color: #ef4444;
-            font-size: 36px;
-            font-weight: 900;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-            text-shadow: 0 0 30px rgba(239, 68, 68, 1);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .stopped-message {
-            color: #fff;
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            animation: fadeInOut 2s infinite;
-        }
-
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
     </style>
 </head>
 <body>
-    <div class="server-stopped-overlay" id="serverOverlay">
-        <div class="stopped-content">
-            <div class="stopped-icon">🛑</div>
-            <div class="stopped-text">SERVER IS CLOSED NOW</div>
-            <div class="stopped-message">IT WILL BE ACTIVE AGAIN SOON</div>
-        </div>
-    </div>
-
-    <div class="scroll-container" id="mainContent">
+    <div class="scroll-container">
         <div class="container">
+            <!-- Owner Name -->
             <div class="owner-name">
                 <h1>⭐ RABINDRA DAS ⭐</h1>
             </div>
 
+            <!-- Header -->
             <div class="header glass">
                 <h2>🔗 LINK BYPASS</h2>
                 <p>Submit your URL and get results instantly</p>
@@ -412,23 +344,26 @@
                 </div>
             </div>
 
+            <!-- Submission Form -->
             <div class="submission-box glass">
                 <div class="input-group">
                     <input 
                         type="text" 
                         id="urlInput" 
                         placeholder="Paste your URL here..."
+                        onkeypress="if(event.key === 'Enter') submitURL()"
                     >
-                    <button id="submitBtn">🚀 SUBMIT</button>
+                    <button id="submitBtn" onclick="submitURL()">🚀 SUBMIT</button>
                 </div>
             </div>
 
+            <!-- Results -->
             <div class="results-box glass">
                 <h2>📋 Your Submissions</h2>
                 <div id="submissionsList">
                     <div class="no-results">
                         <svg fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                         </svg>
                         <p>No submissions yet. Submit a URL to get started!</p>
                     </div>
@@ -438,34 +373,23 @@
     </div>
 
     <script>
+        // ==================== CONFIGURATION ====================
         const FIREBASE_DB_URL = 'https://final-destination-7a7f5-default-rtdb.firebaseio.com';
         const TELEGRAM_BOT_TOKEN = '7755106293:AAF9EudWT_GJzTKM3EzVUPV6j_brSxWQVKc';
         const TELEGRAM_CHAT_ID = '-1003663406350';
+        // ======================================================
 
         let userId = '';
         let submissions = [];
-        let isServerStopped = false;
 
-        function decryptData(encrypted) {
-            try {
-                const decoded = decodeURIComponent(atob(encrypted));
-                const data = decoded.replace(/_SECURE_\d+/, '');
-                return JSON.parse(data);
-            } catch {
-                return null;
-            }
-        }
-
+        // Initialize
         window.onload = function() {
             initUser();
-            initSecurity();
-            checkServerStatus();
             loadSubmissions();
             startAutoRefresh();
-            startServerCheck();
-            setupEventListeners();
         };
 
+        // User ID generate/load
         function initUser() {
             let storedUserId = localStorage.getItem('userId');
             if (!storedUserId) {
@@ -476,131 +400,8 @@
             document.getElementById('userIdDisplay').textContent = userId;
         }
 
-        function initSecurity() {
-            document.addEventListener('contextmenu', e => e.preventDefault());
-            document.addEventListener('keydown', e => {
-                if (e.key === 'F12' || 
-                    (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) ||
-                    (e.ctrlKey && e.key === 'U')) {
-                    e.preventDefault();
-                }
-            });
-            setInterval(() => console.clear(), 1000);
-        }
-
-        function setupEventListeners() {
-            document.getElementById('urlInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') submitURL();
-            });
-
-            document.getElementById('submitBtn').addEventListener('click', submitURL);
-
-            window.addEventListener('storage', function(e) {
-                if (e.key && e.key.startsWith('__')) checkServerStatus();
-            });
-
-            if (window.BroadcastChannel) {
-                const channel = new BroadcastChannel('__secure_channel');
-                channel.onmessage = function(event) {
-                    if (event.data.encrypted) {
-                        localStorage.setItem('__sys_status', event.data.encrypted);
-                        checkServerStatus();
-                    }
-                };
-            }
-        }
-
-        async function checkServerStatus() {
-            let serverStopped = false;
-
-            try {
-                const localEncrypted = localStorage.getItem('__sys_status');
-                if (localEncrypted) {
-                    const data = decryptData(localEncrypted);
-                    if (data && data.status === 'stopped') serverStopped = true;
-                }
-            } catch (e) {}
-
-            try {
-                const sessionEncrypted = sessionStorage.getItem('__sys_status');
-                if (sessionEncrypted) {
-                    const data = decryptData(sessionEncrypted);
-                    if (data && data.status === 'stopped') serverStopped = true;
-                }
-            } catch (e) {}
-
-            try {
-                const statusUpdate = localStorage.getItem('__status_update');
-                if (statusUpdate) {
-                    const update = JSON.parse(statusUpdate);
-                    if (update.encrypted) {
-                        const data = decryptData(update.encrypted);
-                        if (data && data.status === 'stopped') serverStopped = true;
-                    }
-                }
-            } catch (e) {}
-
-            try {
-                const response = await fetch(FIREBASE_DB_URL + '/siteStatus.json');
-                const firebaseData = await response.json();
-                if (firebaseData && firebaseData.data) {
-                    const data = decryptData(firebaseData.data);
-                    if (data && data.status === 'stopped') serverStopped = true;
-                }
-            } catch (e) {}
-
-            isServerStopped = serverStopped;
-            
-            if (serverStopped) {
-                enforceServerStop();
-            } else {
-                releaseServerStop();
-            }
-        }
-
-        function enforceServerStop() {
-            const overlay = document.getElementById('serverOverlay');
-            const mainContent = document.getElementById('mainContent');
-            
-            overlay.classList.add('active');
-            
-            if (mainContent) {
-                mainContent.style.pointerEvents = 'none';
-                mainContent.style.filter = 'blur(20px)';
-            }
-            
-            document.querySelectorAll('input, button').forEach(el => {
-                el.disabled = true;
-            });
-            
-            document.body.style.overflow = 'hidden';
-        }
-
-        function releaseServerStop() {
-            const overlay = document.getElementById('serverOverlay');
-            const mainContent = document.getElementById('mainContent');
-            
-            overlay.classList.remove('active');
-            
-            if (mainContent) {
-                mainContent.style.pointerEvents = 'auto';
-                mainContent.style.filter = 'none';
-            }
-            
-            document.querySelectorAll('input, button').forEach(el => {
-                el.disabled = false;
-            });
-            
-            document.body.style.overflow = 'auto';
-        }
-
-        function startServerCheck() {
-            setInterval(() => checkServerStatus(), 1000);
-        }
-
+        // URL submit
         async function submitURL() {
-            if (isServerStopped) return;
-            
             const urlInput = document.getElementById('urlInput');
             const url = urlInput.value.trim();
 
@@ -609,6 +410,7 @@
                 return;
             }
 
+            // URL validation
             try {
                 new URL(url);
             } catch {
@@ -630,8 +432,9 @@
                     result: null
                 };
 
+                // Save to Firebase
                 const response = await fetch(
-                    FIREBASE_DB_URL + '/submissions/' + userId + '/' + submissionId + '.json',
+                    `${FIREBASE_DB_URL}/submissions/${userId}/${submissionId}.json`,
                     {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -640,7 +443,9 @@
                 );
 
                 if (response.ok) {
+                    // Send to Telegram
                     await sendToTelegram(userId, url, submissionId);
+                    
                     urlInput.value = '';
                     showNotification('✅ URL submitted successfully!');
                     loadSubmissions();
@@ -648,6 +453,7 @@
                     throw new Error('Failed to submit');
                 }
             } catch (error) {
+                console.error('Error:', error);
                 alert('Failed to submit URL. Please try again.');
             } finally {
                 submitBtn.disabled = false;
@@ -655,17 +461,19 @@
             }
         }
 
+        // Send to Telegram (✅ FIXED - Added disable_web_page_preview)
         async function sendToTelegram(uid, url, subId) {
-            const message = '🔔 *New URL Submission*\n\n*User ID:* `' + uid + '`\n*Submission ID:* `' + subId + '`\n*URL:* ' + url + '\n\n*Reply:*\n`/reply ' + uid + ' ' + subId + ' YOUR_RESULT_URL`';
+            const message = `🔔 *New URL Submission*\n\n*User ID:* \`${uid}\`\n*Submission ID:* \`${subId}\`\n*URL:* ${url}\n\n*Reply:*\n\`/reply ${uid} ${subId} YOUR_RESULT_URL\``;
 
             try {
-                await fetch('https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage', {
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: TELEGRAM_CHAT_ID,
                         text: message,
-                        parse_mode: 'Markdown'
+                        parse_mode: 'Markdown',
+                        disable_web_page_preview: true  // ← ✅ এই লাইন যোগ করা হয়েছে!
                     })
                 });
             } catch (error) {
@@ -673,9 +481,10 @@
             }
         }
 
+        // Load submissions
         async function loadSubmissions() {
             try {
-                const response = await fetch(FIREBASE_DB_URL + '/submissions/' + userId + '.json');
+                const response = await fetch(`${FIREBASE_DB_URL}/submissions/${userId}.json`);
                 const data = await response.json();
 
                 if (data) {
@@ -692,38 +501,66 @@
             }
         }
 
+        // Display submissions
         function displaySubmissions() {
             const container = document.getElementById('submissionsList');
 
             if (submissions.length === 0) {
-                container.innerHTML = '<div class="no-results"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg><p>No submissions yet. Submit a URL to get started!</p></div>';
+                container.innerHTML = `
+                    <div class="no-results">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        <p>No submissions yet. Submit a URL to get started!</p>
+                    </div>
+                `;
                 return;
             }
 
             container.innerHTML = submissions.map(sub => {
                 const escapedResult = sub.result ? sub.result.replace(/'/g, "\\'") : '';
-                const statusClass = sub.status === 'completed' ? 'status-completed' : 'status-pending';
-                const statusText = sub.status === 'completed' ? '✅ Completed' : '⏳ Pending';
-                
-                let resultHTML = '';
-                if (sub.status === 'completed' && sub.result) {
-                    resultHTML = '<div class="result-box"><div class="result-label">📥 Result:</div><div class="button-group"><button class="btn btn-open" onclick="openLink(\'' + escapedResult + '\')">🔗 OPEN</button><button class="btn btn-copy" onclick="copyLink(\'' + escapedResult + '\')">📋 COPY</button></div></div>';
-                } else {
-                    resultHTML = '<div class="pending-message">⏳ Waiting for admin response...</div>';
-                }
-                
-                return '<div class="submission-item"><div class="submission-header"><div class="submission-time">' + new Date(sub.timestamp).toLocaleString() + '</div><div class="submission-url">' + sub.url + '</div><div class="status-badge ' + statusClass + '">' + statusText + '</div></div>' + resultHTML + '</div>';
+                return `
+                <div class="submission-item">
+                    <div class="submission-header">
+                        <div class="submission-time">
+                            ${new Date(sub.timestamp).toLocaleString()}
+                        </div>
+                        <div class="submission-url">${sub.url}</div>
+                        <div class="status-badge ${sub.status === 'completed' ? 'status-completed' : 'status-pending'}">
+                            ${sub.status === 'completed' ? '✅ Completed' : '⏳ Pending'}
+                        </div>
+                    </div>
+
+                    ${sub.status === 'completed' && sub.result ? `
+                        <div class="result-box">
+                            <div class="result-label">📥 Result:</div>
+                            <div class="button-group">
+                                <button class="btn btn-open" onclick="openLink('${escapedResult}')">
+                                    🔗 OPEN
+                                </button>
+                                <button class="btn btn-copy" onclick="copyLink('${escapedResult}')">
+                                    📋 COPY
+                                </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="pending-message">
+                            ⏳ Waiting for admin response...
+                        </div>
+                    `}
+                </div>
+            `;
             }).join('');
         }
 
+        // Open link
         function openLink(url) {
-            if (isServerStopped) return;
             window.open(url, '_blank');
         }
 
+        // Copy link
         function copyLink(url) {
-            if (isServerStopped) return;
-            
+            // Method 1: Modern clipboard API
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(() => {
                     showNotification('📋 Link copied to clipboard!');
@@ -735,6 +572,7 @@
             }
         }
 
+        // Fallback copy method
         function fallbackCopy(text) {
             const textarea = document.createElement('textarea');
             textarea.value = text;
@@ -742,6 +580,7 @@
             textarea.style.opacity = '0';
             document.body.appendChild(textarea);
             textarea.select();
+            textarea.setSelectionRange(0, 99999);
             
             try {
                 document.execCommand('copy');
@@ -753,20 +592,22 @@
             document.body.removeChild(textarea);
         }
 
+        // Show notification
         function showNotification(message) {
-            if (isServerStopped) return;
-            
             const notif = document.createElement('div');
             notif.className = 'notification';
             notif.textContent = message;
             document.body.appendChild(notif);
 
-            setTimeout(() => notif.remove(), 3000);
+            setTimeout(() => {
+                notif.remove();
+            }, 3000);
         }
 
+        // Auto refresh every 5 seconds
         function startAutoRefresh() {
             setInterval(() => {
-                if (!isServerStopped) loadSubmissions();
+                loadSubmissions();
             }, 5000);
         }
     </script>
